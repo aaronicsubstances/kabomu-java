@@ -1,17 +1,19 @@
 package com.aaronicsubstances.kabomu.protocolimpl;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 
 import com.aaronicsubstances.kabomu.exceptions.KabomuIOException;
 
-class ContentLengthEnforcingStreamInternal extends InputStream {
+class ContentLengthEnforcingStreamInternal extends FilterInputStream {
     private final InputStream backingStream;
     private long bytesLeftToRead;
 
     public ContentLengthEnforcingStreamInternal(InputStream backingStream,
             long contentLength) {
+        super(backingStream);
         Objects.requireNonNull(backingStream, "backingStream");
         this.backingStream = backingStream;
         bytesLeftToRead = contentLength;
@@ -27,34 +29,31 @@ class ContentLengthEnforcingStreamInternal extends InputStream {
             byteRead = backingStream.read();
             bytesJustRead = byteRead >= 0 ? 1 : 0;
         }
-        updateState(bytesToRead, bytesJustRead);
+        updateState(bytesJustRead);
         return byteRead;
     }
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-        int bytesToRead = Math.min((int)bytesLeftToRead, len);
-
-        // if bytes to read is zero at this stage and
-        // the length requested is zero,
-        // go ahead and call backing reader
-        // (e.g. so that any error in backing reader can be thrown).
-        int bytesJustRead = 0;
-        if (bytesToRead > 0 || len == 0) {
-            bytesJustRead = backingStream.read(
-                b, off, bytesToRead);
+        if (len == 0) {
+            return 0;
         }
-        updateState(bytesToRead, bytesJustRead);
-        return bytesJustRead;
+        len = Math.min((int)bytesLeftToRead, len);
+        if (len != 0) {
+            len = backingStream.read(b, off, len);
+        }
+        updateState(len);
+        return len <= 0 ? -1 : len;
     }
 
-    private void updateState(int bytesToRead, int bytesJustRead) {
-        bytesLeftToRead -= bytesJustRead;
+    private void updateState(int bytesRead) {
+        if (bytesRead > 0) {
+            bytesLeftToRead -= bytesRead;
+        }
 
         // if end of read is encountered, ensure that all
         // requested bytes have been read.
-        boolean endOfRead = bytesToRead > 0 && bytesJustRead == 0;
-        if (endOfRead && bytesLeftToRead > 0) {
+        if (bytesLeftToRead > 0 && bytesRead <= 0) {
             throw KabomuIOException.createEndOfReadErrorInternal();
         }
     }

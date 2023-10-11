@@ -3,5 +3,5 @@ package com.aaronicsubstances.kabomu.abstractions;
 @FunctionalInterface
 public interface QuasiHttpApplication {
     
-    QuasiHttpResponse processRequest(QuasiHttpRequest request);
+    QuasiHttpResponse processRequest(QuasiHttpRequest request) throws Exception;
 }

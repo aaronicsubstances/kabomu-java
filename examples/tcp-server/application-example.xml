@@ -1,0 +1,6 @@
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+    <entry key="port"></entry>
+    <entry key="save.dir"></entry>
+    <entry key="stop.time.wait.secs"></entry>
+</properties>

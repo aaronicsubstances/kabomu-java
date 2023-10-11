@@ -1,12 +1,13 @@
 package com.aaronicsubstances.kabomu.protocolimpl;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 
 import com.aaronicsubstances.kabomu.exceptions.KabomuIOException;
 
-public class MaxLengthEnforcingStreamInternal extends InputStream {
+public class MaxLengthEnforcingStreamInternal extends FilterInputStream {
     private static final int DEFAULT_MAX_LENGTH = 134_217_728;
 
     private final InputStream backingStream;
@@ -15,6 +16,7 @@ public class MaxLengthEnforcingStreamInternal extends InputStream {
 
     public MaxLengthEnforcingStreamInternal(InputStream backingStream,
             int maxLength) {
+        super(backingStream);
         Objects.requireNonNull(backingStream, "backingStream");
         if (maxLength == 0) {
             maxLength = DEFAULT_MAX_LENGTH;
@@ -44,23 +46,21 @@ public class MaxLengthEnforcingStreamInternal extends InputStream {
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-        int bytesToRead = Math.min(bytesLeftToRead, len);
-
-            // if bytes to read is zero at this stage and
-            // the length requested is zero,
-            // go ahead and call backing reader
-            // (e.g. so that any error in backing reader can be thrown).
-            int bytesJustRead = 0;
-            if (bytesToRead > 0 || len == 0) {
-                bytesJustRead = backingStream.read(
-                    b, off, bytesToRead);
-            }
-            updateState(bytesJustRead);
-            return bytesJustRead;
+        if (len == 0) {
+            return 0;
+        }
+        len = Math.min(bytesLeftToRead, len);
+        if (len != 0) {
+            len = backingStream.read(b, off, len);
+        }
+        updateState(len);
+        return len <= 0 ? -1 : len;
     }
 
-    private void updateState(int bytesJustRead) {
-        bytesLeftToRead -= bytesJustRead;
+    private void updateState(int bytesRead) {
+        if (bytesRead > 0) {
+            bytesLeftToRead -= bytesRead;
+        }
         if (bytesLeftToRead == 0) {
             throw new KabomuIOException(String.format(
                 "stream size exceeds limit of %s bytes",

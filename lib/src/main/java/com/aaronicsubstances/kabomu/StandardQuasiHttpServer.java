@@ -1,8 +1,6 @@
 package com.aaronicsubstances.kabomu;
 
 import java.util.Objects;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import com.aaronicsubstances.kabomu.abstractions.CheckedRunnable;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpAltTransport;
@@ -11,6 +9,8 @@ import com.aaronicsubstances.kabomu.abstractions.QuasiHttpConnection;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpRequest;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpResponse;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpServerTransport;
+import com.aaronicsubstances.kabomu.abstractions.QuasiHttpAltTransport.DeserializerFunction;
+import com.aaronicsubstances.kabomu.abstractions.QuasiHttpAltTransport.SerializerFunction;
 import com.aaronicsubstances.kabomu.exceptions.MissingDependencyException;
 import com.aaronicsubstances.kabomu.exceptions.QuasiHttpException;
 import com.aaronicsubstances.kabomu.protocolimpl.ProtocolUtilsInternal;
@@ -22,10 +22,10 @@ public class StandardQuasiHttpServer {
     public StandardQuasiHttpServer() {
     }
 
-    public QuasiHttpApplication getApplicatin() {
+    public QuasiHttpApplication getApplication() {
         return application;
     }
-    public void setApplicatin(QuasiHttpApplication application) {
+    public void setApplication(QuasiHttpApplication application) {
         this.application = application;
     }
     public QuasiHttpServerTransport getTransport() {
@@ -35,7 +35,8 @@ public class StandardQuasiHttpServer {
         this.transport = transport;
     }
 
-    public void acceptConnection(QuasiHttpConnection connection) {
+    public void acceptConnection(QuasiHttpConnection connection)
+            throws Exception {
         Objects.requireNonNull(connection, "connection");
 
         // access fields for use per processing call, in order to cooperate with
@@ -71,8 +72,8 @@ public class StandardQuasiHttpServer {
     private void processAccept(QuasiHttpApplication application,
             QuasiHttpServerTransport transport,
             QuasiHttpConnection connection) throws Exception {
-        Function<QuasiHttpConnection, QuasiHttpRequest> requestDeserializer = null;
         QuasiHttpAltTransport altTransport = null;
+        DeserializerFunction<QuasiHttpRequest> requestDeserializer = null;
         if (transport instanceof QuasiHttpAltTransport) {
             altTransport = (QuasiHttpAltTransport)transport;
             requestDeserializer = altTransport.getRequestDeserializer();
@@ -93,7 +94,7 @@ public class StandardQuasiHttpServer {
 
         try {
             boolean responseSerialized = false;
-            BiFunction<QuasiHttpConnection, QuasiHttpResponse, Boolean> responseSerializer = null;
+            SerializerFunction<QuasiHttpResponse> responseSerializer = null;
             if (altTransport != null) {
                 responseSerializer = altTransport.getResponseSerializer();
             }
@@ -116,7 +117,8 @@ public class StandardQuasiHttpServer {
     }
 
     private void abort(QuasiHttpServerTransport transport,
-            QuasiHttpConnection connection, boolean errorOccured) {
+            QuasiHttpConnection connection, boolean errorOccured)
+            throws Exception {
         if (errorOccured) {
             try {
                 transport.releaseConnection(connection);

@@ -1,5 +1,6 @@
 package com.aaronicsubstances.kabomu.protocolimpl;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
@@ -8,7 +9,7 @@ import com.aaronicsubstances.kabomu.IOUtilsInternal;
 import com.aaronicsubstances.kabomu.MiscUtilsInternal;
 import com.aaronicsubstances.kabomu.exceptions.KabomuIOException;
 
-public class BodyChunkDecodingStreamInternal extends InputStream {
+public class BodyChunkDecodingStreamInternal extends FilterInputStream  {
     private final InputStream backingStream;
     private final int expectedTag;
     private final int tagToIgnore;
@@ -17,6 +18,7 @@ public class BodyChunkDecodingStreamInternal extends InputStream {
 
     public BodyChunkDecodingStreamInternal(InputStream backingStream,
             int expectedTag, int tagToIgnore) {
+        super(backingStream);
         Objects.requireNonNull(backingStream, "backingStream");
         this.backingStream = backingStream;
         this.expectedTag = expectedTag;
@@ -48,27 +50,31 @@ public class BodyChunkDecodingStreamInternal extends InputStream {
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-        // once empty data chunk is seen, return 0 for all subsequent reads.
-        if (_lastChunkSeen) {
+        if (len == 0) {
             return 0;
+        }
+
+        // once empty data chunk is seen, return -1 for all subsequent reads.
+        if (_lastChunkSeen) {
+            return -1;
         }
 
         if (_chunkDataLenRem == 0) {
             _chunkDataLenRem = fetchNextTagAndLength();
             if (_chunkDataLenRem == 0) {
                 _lastChunkSeen = true;
-                return 0;
+                return -1;
             }
         }
 
-        int bytesToRead = Math.min(_chunkDataLenRem, len);
-        bytesToRead = backingStream.read(b, off, bytesToRead);
-        if (bytesToRead <= 0) {
+        len = Math.min(_chunkDataLenRem, len);
+        len = backingStream.read(b, off, len);
+        if (len <= 0) {
             throw KabomuIOException.createEndOfReadErrorInternal();
         }
-        _chunkDataLenRem -= bytesToRead;
+        _chunkDataLenRem -= len;
 
-        return bytesToRead;
+        return len;
     }
 
     private int fetchNextTagAndLength() throws IOException {

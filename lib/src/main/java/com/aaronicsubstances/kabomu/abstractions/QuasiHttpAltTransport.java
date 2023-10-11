@@ -1,11 +1,22 @@
 package com.aaronicsubstances.kabomu.abstractions;
 
-import java.util.function.BiFunction;
-import java.util.function.Function;
-
 public interface QuasiHttpAltTransport {
-    BiFunction<QuasiHttpConnection, QuasiHttpRequest, Boolean> getRequestSerializer();
-    BiFunction<QuasiHttpConnection, QuasiHttpResponse, Boolean> getResponseSerializer();
-    Function<QuasiHttpConnection, QuasiHttpRequest> getRequestDeserializer();
-    Function<QuasiHttpConnection, QuasiHttpResponse> getResponseDeserializer();
+    SerializerFunction<QuasiHttpRequest> getRequestSerializer()
+        throws Exception;
+    SerializerFunction<QuasiHttpResponse> getResponseSerializer()
+        throws Exception;
+    DeserializerFunction<QuasiHttpRequest> getRequestDeserializer()
+        throws Exception;
+    DeserializerFunction<QuasiHttpResponse> getResponseDeserializer()
+        throws Exception;
+
+    @FunctionalInterface
+    public static interface SerializerFunction<T> {
+        Boolean apply(QuasiHttpConnection connection, T entity) throws Exception;
+    }
+    
+    @FunctionalInterface
+    public static interface DeserializerFunction<T> {
+        T apply(QuasiHttpConnection connection) throws Exception;
+    }
 }

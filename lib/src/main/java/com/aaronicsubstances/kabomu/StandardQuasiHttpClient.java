@@ -2,8 +2,6 @@ package com.aaronicsubstances.kabomu;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import com.aaronicsubstances.kabomu.abstractions.CheckedRunnable;
 import com.aaronicsubstances.kabomu.abstractions.ConnectionAllocationResponse;
@@ -13,11 +11,19 @@ import com.aaronicsubstances.kabomu.abstractions.QuasiHttpConnection;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpProcessingOptions;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpRequest;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpResponse;
+import com.aaronicsubstances.kabomu.abstractions.QuasiHttpAltTransport.DeserializerFunction;
+import com.aaronicsubstances.kabomu.abstractions.QuasiHttpAltTransport.SerializerFunction;
 import com.aaronicsubstances.kabomu.exceptions.MissingDependencyException;
 import com.aaronicsubstances.kabomu.exceptions.QuasiHttpException;
 import com.aaronicsubstances.kabomu.protocolimpl.ProtocolUtilsInternal;
 
 public class StandardQuasiHttpClient {
+
+    @FunctionalInterface
+    public static interface RequestGenerator {
+        QuasiHttpRequest apply(Map<String, Object> environment) throws Exception;
+    }
+
     private QuasiHttpClientTransport transport;
 
     public StandardQuasiHttpClient() {
@@ -32,34 +38,34 @@ public class StandardQuasiHttpClient {
     }
 
     public QuasiHttpResponse send(Object remoteEndpoint,
-            QuasiHttpRequest request) {
+            QuasiHttpRequest request) throws Exception {
         return send(remoteEndpoint, request, null);
     }
 
     public QuasiHttpResponse send(Object remoteEndpoint,
-            QuasiHttpRequest request, QuasiHttpProcessingOptions options) {
+            QuasiHttpRequest request, QuasiHttpProcessingOptions options)
+            throws Exception {
         Objects.requireNonNull(request, "request");
         return sendInternal(remoteEndpoint, request, null, options);
     }
 
     public QuasiHttpResponse send2(Object remoteEndpoint,
-        Function<Map<String, Object>, QuasiHttpRequest> requestFunc)
-    {
+            RequestGenerator requestFunc) throws Exception {
         return send2(remoteEndpoint, requestFunc,
             null);
     }
 
     public QuasiHttpResponse send2(Object remoteEndpoint,
-            Function<Map<String, Object>, QuasiHttpRequest> requestFunc,
-            QuasiHttpProcessingOptions options) {
+            RequestGenerator requestFunc,
+            QuasiHttpProcessingOptions options) throws Exception {
         Objects.requireNonNull(requestFunc, "requestFunc");
         return sendInternal(remoteEndpoint, null, requestFunc,
             options);
     }
 
     private QuasiHttpResponse sendInternal(Object remoteEndpoint, QuasiHttpRequest request,
-            Function<Map<String, Object>, QuasiHttpRequest> requestFunc,
-            QuasiHttpProcessingOptions sendOptions) {
+            RequestGenerator requestFunc,
+            QuasiHttpProcessingOptions sendOptions) throws Exception {
         // access fields for use per request call, in order to cooperate with
         // any implementation of field accessors which supports
         // concurrent modifications.
@@ -84,8 +90,7 @@ public class StandardQuasiHttpClient {
         }
         catch (Exception e) {
             abort(transport, connection, true, null);
-            if (e instanceof QuasiHttpException)
-            {
+            if (e instanceof QuasiHttpException) {
                 throw (QuasiHttpException)e;
             }
             QuasiHttpException abortError = new QuasiHttpException(
@@ -97,8 +102,10 @@ public class StandardQuasiHttpClient {
     }
 
     private QuasiHttpResponse processSend(QuasiHttpRequest request,
-            Function<Map<String, Object>, QuasiHttpRequest> requestFunc, QuasiHttpClientTransport transport2,
-            QuasiHttpConnection connection, ConnectionAllocationResponse connectionAllocationResponse)
+            RequestGenerator requestFunc,
+            QuasiHttpClientTransport transport2,
+            QuasiHttpConnection connection,
+            ConnectionAllocationResponse connectionAllocationResponse)
             throws Exception {
         CheckedRunnable ongoingConnectionTask = connectionAllocationResponse.getConnectTask();
         if (ongoingConnectionTask != null) {
@@ -115,8 +122,8 @@ public class StandardQuasiHttpClient {
 
         // send entire request first before
         // receiving of response.
-        BiFunction<QuasiHttpConnection, QuasiHttpRequest, Boolean> requestSerializer = null;
         QuasiHttpAltTransport altTransport = null;
+        SerializerFunction<QuasiHttpRequest> requestSerializer = null;
         if (transport instanceof QuasiHttpAltTransport) {
             altTransport = (QuasiHttpAltTransport)transport;
             requestSerializer = altTransport.getRequestSerializer();
@@ -133,7 +140,7 @@ public class StandardQuasiHttpClient {
         }
 
         QuasiHttpResponse response = null;
-        Function<QuasiHttpConnection, QuasiHttpResponse> responseDeserializer = null;
+        DeserializerFunction<QuasiHttpResponse> responseDeserializer = null;
         if (altTransport != null) {
             responseDeserializer = altTransport.getResponseDeserializer();
         }
@@ -155,7 +162,7 @@ public class StandardQuasiHttpClient {
 
     private static void abort(QuasiHttpClientTransport transport,
             QuasiHttpConnection connection, boolean errorOccured,
-            QuasiHttpResponse response) {
+            QuasiHttpResponse response) throws Exception {
         if (errorOccured) {
             try {
                 transport.releaseConnection(connection, null);

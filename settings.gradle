@@ -9,8 +9,27 @@
 
 plugins {
     // Apply the foojay-resolver plugin to allow automatic download of JDKs
-    //id 'org.gradle.toolchains.foojay-resolver-convention' version '0.4.0'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.4.0'
 }
 
-rootProject.name = 'kabomu'
-include('lib')
+rootProject.name = 'kabomu-java'
+
+// include two projects, 'foo' and 'foo:bar'
+// directories are inferred by replacing ':' with '/'
+//include 'foo:bar'
+
+// include one project whose project dir does not match the logical project path
+include('kabomu')
+project(':kabomu').projectDir = file('lib')
+
+include('examples-shared')
+project(':examples-shared').projectDir = file('examples/shared')
+
+// include many projects whose project dirs do not match the logical project paths
+file('examples').eachDir { dir ->
+    if (dir.name == 'shared') {
+        return;
+    }
+    include dir.name
+    project(":${dir.name}").projectDir = dir
+}
