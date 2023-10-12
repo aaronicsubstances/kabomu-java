@@ -4,6 +4,8 @@
 
 plugins {
     id 'com.aaronicsubstances.kabomu.java-library-conventions'
+    id 'maven-publish'
+    id 'signing'
 }
 
 group = "com.aaronicsubstances"
@@ -18,6 +20,8 @@ java {
         // sets sourceCompatibility and targetCompatibility to 1.8
         languageVersion = JavaLanguageVersion.of(8)
     }
+    withJavadocJar()
+    withSourcesJar()
 }
 javadoc {
     if(JavaVersion.current().isJava8Compatible()) {
@@ -30,3 +34,82 @@ javadoc {
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+
+            pom {
+                name = "$project.name"
+                description = "$project.description"
+                inceptionYear = '2023'
+                url = "https://github.com/aaronicsubstances/kabomu-java.git"
+                properties = [
+                    "maven.compiler.source": "1.8",
+                    "maven.compiler.target": "1.8",
+                    "project.build.sourceEncoding": "UTF-8"
+                ]
+                licenses {
+                    license {
+                        name = 'MPL-2.0'
+                        url = 'https://opensource.org/license/mpl-2.0/'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'aaronic'
+                        name = 'Aaron Baffour-Awuah'
+                        email = 'aaronbaffourawuah@gmail.com'
+                    }
+                }
+                scm {
+                    connection = "scm:ssh://git@github.com:aaronicsubstances/kabomu-java.git"
+                    developerConnection = "scm:ssh://git@github.com:aaronicsubstances/kabomu-java.git"
+                    url = "https://github.com/aaronicsubstances/kabomu-java.git"
+                }
+                withXml {
+                    def distMgt = asNode().appendNode('distributionManagement')
+                    def snapshotSection = distMgt.appendNode('snapshotRepository')
+                    snapshotSection.appendNode('id', 'ossrh')
+                    snapshotSection.appendNode('url', 
+                        'https://oss.sonatype.org/content/repositories/snapshots/')
+                    def releaseSection = distMgt.appendNode('repository')
+                    releaseSection.appendNode('id', 'ossrh')
+                    releaseSection.appendNode('url',
+                        'https://oss.sonatype.org/service/local/staging/deploy/maven2')
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'staging'
+            def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+            def snapshotsRepoUrl  = 'https://oss.sonatype.org/content/repositories/snapshots/'
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+            credentials {
+                username = findProperty('nexusUsername')
+                password = findProperty('nexusPassword')
+            }
+        }
+    }
+}
+
+signing {
+    useGpgCmd()
+    sign publishing.publications.mavenJava
+}
+
+tasks.withType(Sign) {
+    onlyIf { gradle.taskGraph.hasTask("${project.path}:publish") }
+}

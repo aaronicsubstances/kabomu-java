@@ -7,8 +7,6 @@ plugins {
 }
 
 dependencies {
-    runtimeOnly 'ch.qos.logback:logback-core'
-    runtimeOnly 'ch.qos.logback:logback-classic'
     implementation project(':examples-shared')
 }
 
