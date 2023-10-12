@@ -4,6 +4,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +39,10 @@ public class App {
         
         DefaultQuasiHttpProcessingOptions defaultSendOptions = new DefaultQuasiHttpProcessingOptions();
         defaultSendOptions.setTimeoutMillis(5_000);
-        LocalhostTcpClientTransport transport = new LocalhostTcpClientTransport();
+        
+        ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+        LocalhostTcpClientTransport transport = new LocalhostTcpClientTransport(
+            scheduledExecutorService, null);
         transport.setDefaultSendOptions(defaultSendOptions);
         StandardQuasiHttpClient instance = new StandardQuasiHttpClient();
         instance.setTransport(transport);
@@ -48,6 +53,9 @@ public class App {
         }
         catch (Exception e) {
             LOG.atError().setCause(e).log("Fatal error encountered");
+        }
+        finally {
+            scheduledExecutorService.shutdown();
         }
     }
 }

@@ -9,17 +9,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 
 import com.aaronicsubstances.kabomu.CsvUtils;
 import com.aaronicsubstances.kabomu.IOUtilsInternal;
 import com.aaronicsubstances.kabomu.MiscUtilsInternal;
 import com.aaronicsubstances.kabomu.QuasiHttpUtils;
+import com.aaronicsubstances.kabomu.abstractions.CustomTimeoutScheduler;
 import com.aaronicsubstances.kabomu.abstractions.DefaultQuasiHttpRequest;
 import com.aaronicsubstances.kabomu.abstractions.DefaultQuasiHttpResponse;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpConnection;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpProcessingOptions;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpRequest;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpResponse;
+import com.aaronicsubstances.kabomu.abstractions.CustomTimeoutScheduler.TimeoutResult;
 import com.aaronicsubstances.kabomu.exceptions.ExpectationViolationException;
 import com.aaronicsubstances.kabomu.exceptions.MissingDependencyException;
 import com.aaronicsubstances.kabomu.exceptions.QuasiHttpException;
@@ -38,6 +41,38 @@ public class ProtocolUtilsInternal {
             }
         }
         return null;
+    }
+
+    public static QuasiHttpResponse runTimeoutScheduler(
+        CustomTimeoutScheduler timeoutScheduler, boolean forClient,
+        Callable<QuasiHttpResponse> proc) throws Exception {
+        String timeoutMsg = forClient ? "send timeout" : "receive timeout";
+        TimeoutResult result = timeoutScheduler.apply(proc);
+        if (result != null) {
+            Throwable error = result.getError();
+            if (error != null) {
+                if (error instanceof Error) {
+                    throw (Error)error;
+                }
+                else {
+                    throw (Exception)error;
+                }
+            }
+            if (result.isTimeout() == true) {
+                throw new QuasiHttpException(timeoutMsg,
+                    QuasiHttpException.REASON_CODE_TIMEOUT);
+            }
+        }
+        QuasiHttpResponse response = null;
+        if (result != null) {
+            response = result.getResponse();
+        }
+        if (forClient && response == null)
+        {
+            throw new QuasiHttpException(
+                "no response from timeout scheduler");
+        }
+        return response;
     }
 
     public static void validateHttpHeaderSection(boolean isResponse,
@@ -172,10 +207,6 @@ public class ProtocolUtilsInternal {
     public static List<String> decodeQuasiHttpHeaders(boolean isResponse,
             byte[] data, int offset, int length,
             Map<String, List<String>> headersReceiver) {
-        Objects.requireNonNull(data, "data");
-        if (!MiscUtilsInternal.isValidByteBufferSlice(data, offset, length)) {
-            throw new IllegalArgumentException("invalid byte buffer slice");
-        }
         List<List<String>> csv;
         try {
             csv = CsvUtils.deserialize(MiscUtilsInternal.bytesToString(

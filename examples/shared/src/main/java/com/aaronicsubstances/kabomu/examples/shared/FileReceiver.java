@@ -49,7 +49,6 @@ public class FileReceiver implements QuasiHttpApplication {
             File directory = new File(downloadDirPath, pathForRemoteEndpoint);
             directory.mkdirs();
             File p = new File(directory, fileName);
-            System.out.println("path is: " + p.getAbsolutePath());
             try (OutputStream fileStream = new FileOutputStream(p)) {
                 LOG.debug("Starting receipt of file {} from {}...", fileName, remoteEndpoint);
                 IOUtils.copy(request.getBody(), fileStream);

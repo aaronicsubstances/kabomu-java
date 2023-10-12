@@ -1,13 +1,12 @@
 package com.aaronicsubstances.kabomu.protocolimpl;
 
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 
 import com.aaronicsubstances.kabomu.exceptions.KabomuIOException;
 
-public class MaxLengthEnforcingStreamInternal extends FilterInputStream {
+public class MaxLengthEnforcingStreamInternal extends InputStream {
     private static final int DEFAULT_MAX_LENGTH = 134_217_728;
 
     private final InputStream backingStream;
@@ -16,7 +15,6 @@ public class MaxLengthEnforcingStreamInternal extends FilterInputStream {
 
     public MaxLengthEnforcingStreamInternal(InputStream backingStream,
             int maxLength) {
-        super(backingStream);
         Objects.requireNonNull(backingStream, "backingStream");
         if (maxLength == 0) {
             maxLength = DEFAULT_MAX_LENGTH;

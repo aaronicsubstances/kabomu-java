@@ -2,9 +2,9 @@ package com.aaronicsubstances.kabomu;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 
-import com.aaronicsubstances.kabomu.abstractions.CheckedRunnable;
-import com.aaronicsubstances.kabomu.abstractions.ConnectionAllocationResponse;
+import com.aaronicsubstances.kabomu.abstractions.CustomTimeoutScheduler;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpAltTransport;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpClientTransport;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpConnection;
@@ -75,18 +75,27 @@ public class StandardQuasiHttpClient {
             throw new MissingDependencyException("client transport");
         }
 
-        ConnectionAllocationResponse connectionAllocationResponse = transport.allocateConnection(
+        QuasiHttpConnection connection = transport.allocateConnection(
             remoteEndpoint, sendOptions);
-        QuasiHttpConnection connection = null;
-        if (connectionAllocationResponse != null) {
-            connection = connectionAllocationResponse.getConnection();
-        }
         if (connection == null) {
             throw new QuasiHttpException("no connection");
         }
         try {
-            return processSend(request, requestFunc,
-                transport, connection, connectionAllocationResponse);
+            CustomTimeoutScheduler timeoutScheduler = connection.getTimeoutScheduler();
+            QuasiHttpResponse response;
+            if (timeoutScheduler != null) {
+                Callable<QuasiHttpResponse> proc = () -> processSend(
+                    request, requestFunc, transport, connection);
+                response = ProtocolUtilsInternal.runTimeoutScheduler(
+                    timeoutScheduler, true, proc);
+            }
+            else {
+                response = processSend(request, requestFunc,
+                    transport, connection);
+            }
+            
+            abort(transport, connection, false, response);
+            return response;
         }
         catch (Exception e) {
             abort(transport, connection, true, null);
@@ -101,17 +110,13 @@ public class StandardQuasiHttpClient {
         }
     }
 
-    private QuasiHttpResponse processSend(QuasiHttpRequest request,
+    private static QuasiHttpResponse processSend(QuasiHttpRequest request,
             RequestGenerator requestFunc,
-            QuasiHttpClientTransport transport2,
-            QuasiHttpConnection connection,
-            ConnectionAllocationResponse connectionAllocationResponse)
+            QuasiHttpClientTransport transport,
+            QuasiHttpConnection connection)
             throws Exception {
-        CheckedRunnable ongoingConnectionTask = connectionAllocationResponse.getConnectTask();
-        if (ongoingConnectionTask != null) {
-            // wait for connection to be completely established.
-            ongoingConnectionTask.run();
-        }
+        // wait for connection to be completely established.
+        transport.establishConnection(connection);
 
         if (request == null) {
             request = requestFunc.apply(connection.getEnvironment());
@@ -156,7 +161,6 @@ public class StandardQuasiHttpClient {
                 });
             }
         }
-        abort(transport, connection, false, response);
         return response;
     }
 

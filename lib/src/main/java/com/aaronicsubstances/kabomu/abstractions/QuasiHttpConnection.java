@@ -5,4 +5,5 @@ import java.util.Map;
 public interface QuasiHttpConnection {
     QuasiHttpProcessingOptions getProcessingOptions();
     Map<String, Object> getEnvironment();
+    CustomTimeoutScheduler getTimeoutScheduler();
 }

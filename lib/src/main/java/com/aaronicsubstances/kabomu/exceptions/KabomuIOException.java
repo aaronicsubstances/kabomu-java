@@ -17,7 +17,7 @@ public class KabomuIOException extends KabomuException {
         super(message, cause);
     }
 
-    public static KabomuIOException createEndOfReadErrorInternal() {
+    public static KabomuIOException createEndOfReadError() {
         return new KabomuIOException("unexpected end of read");
     }
 }

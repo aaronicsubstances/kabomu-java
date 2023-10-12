@@ -1,6 +1,5 @@
 package com.aaronicsubstances.kabomu.protocolimpl;
 
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
@@ -9,7 +8,7 @@ import com.aaronicsubstances.kabomu.IOUtilsInternal;
 import com.aaronicsubstances.kabomu.MiscUtilsInternal;
 import com.aaronicsubstances.kabomu.exceptions.KabomuIOException;
 
-public class BodyChunkDecodingStreamInternal extends FilterInputStream  {
+public class BodyChunkDecodingStreamInternal extends InputStream  {
     private final InputStream backingStream;
     private final int expectedTag;
     private final int tagToIgnore;
@@ -18,7 +17,6 @@ public class BodyChunkDecodingStreamInternal extends FilterInputStream  {
 
     public BodyChunkDecodingStreamInternal(InputStream backingStream,
             int expectedTag, int tagToIgnore) {
-        super(backingStream);
         Objects.requireNonNull(backingStream, "backingStream");
         this.backingStream = backingStream;
         this.expectedTag = expectedTag;
@@ -42,7 +40,7 @@ public class BodyChunkDecodingStreamInternal extends FilterInputStream  {
 
         int byteRead = backingStream.read();
         if (byteRead < 0) {
-            throw KabomuIOException.createEndOfReadErrorInternal();
+            throw KabomuIOException.createEndOfReadError();
         }
         _chunkDataLenRem--;
         return byteRead;
@@ -70,7 +68,7 @@ public class BodyChunkDecodingStreamInternal extends FilterInputStream  {
         len = Math.min(_chunkDataLenRem, len);
         len = backingStream.read(b, off, len);
         if (len <= 0) {
-            throw KabomuIOException.createEndOfReadErrorInternal();
+            throw KabomuIOException.createEndOfReadError();
         }
         _chunkDataLenRem -= len;
 

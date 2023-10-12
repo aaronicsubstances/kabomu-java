@@ -1,19 +1,17 @@
 package com.aaronicsubstances.kabomu.protocolimpl;
 
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 
 import com.aaronicsubstances.kabomu.exceptions.KabomuIOException;
 
-class ContentLengthEnforcingStreamInternal extends FilterInputStream {
+class ContentLengthEnforcingStreamInternal extends InputStream {
     private final InputStream backingStream;
     private long bytesLeftToRead;
 
     public ContentLengthEnforcingStreamInternal(InputStream backingStream,
             long contentLength) {
-        super(backingStream);
         Objects.requireNonNull(backingStream, "backingStream");
         this.backingStream = backingStream;
         bytesLeftToRead = contentLength;
@@ -54,7 +52,7 @@ class ContentLengthEnforcingStreamInternal extends FilterInputStream {
         // if end of read is encountered, ensure that all
         // requested bytes have been read.
         if (bytesLeftToRead > 0 && bytesRead <= 0) {
-            throw KabomuIOException.createEndOfReadErrorInternal();
+            throw KabomuIOException.createEndOfReadError();
         }
     }
 }

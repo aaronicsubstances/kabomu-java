@@ -4,6 +4,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +28,7 @@ public class App {
 
         int port = 5001;
         String uploadDirPath = "logs/server";
-        int secsToWaitBeforeShutdown = 10;
+        int secsToWaitBeforeShutdown = -1;
         String portProp = props.getProperty("port");
         if (portProp != null && !portProp.isEmpty()) {
             port = Integer.parseInt(portProp);
@@ -47,7 +49,9 @@ public class App {
         DefaultQuasiHttpProcessingOptions defaultProcessingOptions = new DefaultQuasiHttpProcessingOptions();
         defaultProcessingOptions.setTimeoutMillis(5_000);
 
-        LocalhostTcpServerTransport transport = new LocalhostTcpServerTransport(port, null);
+        ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+        LocalhostTcpServerTransport transport = new LocalhostTcpServerTransport(port,
+            scheduledExecutorService, null);
         transport.setQuasiHttpServer(instance);
         transport.setDefaultProcessingOptions(defaultProcessingOptions);
 
@@ -72,6 +76,7 @@ public class App {
         finally {
             LOG.debug("Stopping Tcp.FileServer...");
             transport.stop();
+            scheduledExecutorService.shutdown();
         }
     }
 }

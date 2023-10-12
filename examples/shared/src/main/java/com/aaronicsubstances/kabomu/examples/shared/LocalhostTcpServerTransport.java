@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,15 +22,18 @@ import com.aaronicsubstances.kabomu.StandardQuasiHttpServer;
 public class LocalhostTcpServerTransport implements QuasiHttpServerTransport {
     private static final Logger LOG = LoggerFactory.getLogger(LocalhostTcpServerTransport.class);
     private final int port;
+    private final ScheduledExecutorService scheduledExecutorService;
     private final ExecutorService executorService;
     private final ServerSocket tcpServer;
     private StandardQuasiHttpServer quasiHttpServer;
     private QuasiHttpProcessingOptions defaultProcessingOptions;
 
     public LocalhostTcpServerTransport(int port,
+            ScheduledExecutorService scheduledExecutorService,
             ExecutorService executorService) throws Exception {
         tcpServer = new ServerSocket();
         this.port = port;
+        this.scheduledExecutorService = scheduledExecutorService;
         this.executorService = executorService != null ?
             executorService : ForkJoinPool.commonPool();
     }
@@ -59,7 +63,6 @@ public class LocalhostTcpServerTransport implements QuasiHttpServerTransport {
 
     public void stop() throws Exception {
         tcpServer.close();
-        executorService.shutdown();
         Thread.sleep(1_000);
     }
 
@@ -87,8 +90,10 @@ public class LocalhostTcpServerTransport implements QuasiHttpServerTransport {
     private void receiveConnection(Socket socket) {
         try {
             socket.setTcpNoDelay(true);
-            SocketConnection connection = new SocketConnection(socket, false,
+            SocketConnection connection = new SocketConnection(socket, null,
                 defaultProcessingOptions, null);
+            connection.setTimeoutScheduler(scheduledExecutorService,
+                executorService);
             quasiHttpServer.acceptConnection(connection);
         }
         catch (Exception ex) {

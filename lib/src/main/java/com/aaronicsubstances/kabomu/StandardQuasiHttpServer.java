@@ -1,8 +1,10 @@
 package com.aaronicsubstances.kabomu;
 
 import java.util.Objects;
+import java.util.concurrent.Callable;
 
 import com.aaronicsubstances.kabomu.abstractions.CheckedRunnable;
+import com.aaronicsubstances.kabomu.abstractions.CustomTimeoutScheduler;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpAltTransport;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpApplication;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpConnection;
@@ -52,8 +54,18 @@ public class StandardQuasiHttpServer {
         }
 
         try {
-            processAccept(application, transport,
-                connection);
+            CustomTimeoutScheduler timeoutScheduler = connection.getTimeoutScheduler();
+            if (timeoutScheduler != null) {
+                Callable<QuasiHttpResponse> proc = () -> processAccept(
+                    application, transport, connection);
+                ProtocolUtilsInternal.runTimeoutScheduler(
+                    timeoutScheduler, false, proc);
+            }
+            else {
+                processAccept(application, transport,
+                    connection);
+            }
+            abort(transport, connection, false);
         }
         catch (Exception e) {
             abort(transport, connection, true);
@@ -69,7 +81,7 @@ public class StandardQuasiHttpServer {
         }
     }
 
-    private void processAccept(QuasiHttpApplication application,
+    private QuasiHttpResponse processAccept(QuasiHttpApplication application,
             QuasiHttpServerTransport transport,
             QuasiHttpConnection connection) throws Exception {
         QuasiHttpAltTransport altTransport = null;
@@ -113,7 +125,7 @@ public class StandardQuasiHttpServer {
                 disposer.run();
             }
         }
-        abort(transport, connection, false);
+        return null;
     }
 
     private void abort(QuasiHttpServerTransport transport,

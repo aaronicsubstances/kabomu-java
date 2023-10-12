@@ -29,7 +29,7 @@ public class IOUtilsInternal {
             }
             if (bytesRead < length) {
                 if (bytesRead <= 0) {
-                    throw KabomuIOException.createEndOfReadErrorInternal();
+                    throw KabomuIOException.createEndOfReadError();
                 }
                 offset += bytesRead;
                 length -= bytesRead;
