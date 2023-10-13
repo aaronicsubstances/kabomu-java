@@ -97,7 +97,7 @@ public class StandardQuasiHttpClient {
             abort(transport, connection, false, response);
             return response;
         }
-        catch (Exception e) {
+        catch (Throwable e) {
             abort(transport, connection, true, null);
             if (e instanceof QuasiHttpException) {
                 throw (QuasiHttpException)e;
@@ -171,7 +171,7 @@ public class StandardQuasiHttpClient {
             try {
                 transport.releaseConnection(connection, null);
             }
-            catch (Exception ignore) { }
+            catch (Throwable ignore) { }
         }
         else {
             transport.releaseConnection(connection, response);

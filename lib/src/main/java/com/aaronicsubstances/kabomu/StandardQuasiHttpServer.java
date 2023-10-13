@@ -3,7 +3,6 @@ package com.aaronicsubstances.kabomu;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
-import com.aaronicsubstances.kabomu.abstractions.CheckedRunnable;
 import com.aaronicsubstances.kabomu.abstractions.CustomTimeoutScheduler;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpAltTransport;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpApplication;
@@ -67,7 +66,7 @@ public class StandardQuasiHttpServer {
             }
             abort(transport, connection, false);
         }
-        catch (Exception e) {
+        catch (Throwable e) {
             abort(transport, connection, true);
             if (e instanceof QuasiHttpException)
             {
@@ -99,12 +98,11 @@ public class StandardQuasiHttpServer {
                 false, transport.getReadableStream(connection), connection);
         }
 
-        QuasiHttpResponse response = application.processRequest(request);
-        if (response == null) {
-            throw new QuasiHttpException("no response");
-        }
+        try (QuasiHttpResponse response = application.processRequest(request)) {
+            if (response == null) {
+                throw new QuasiHttpException("no response");
+            }
 
-        try {
             boolean responseSerialized = false;
             SerializerFunction<QuasiHttpResponse> responseSerializer = null;
             if (altTransport != null) {
@@ -119,12 +117,6 @@ public class StandardQuasiHttpServer {
                     connection);
             }
         }
-        finally {
-            CheckedRunnable disposer = response.getDisposer();
-            if (disposer != null) {
-                disposer.run();
-            }
-        }
         return null;
     }
 
@@ -135,7 +127,7 @@ public class StandardQuasiHttpServer {
             try {
                 transport.releaseConnection(connection);
             }
-            catch (Exception ignore) { }
+            catch (Throwable ignore) { }
         }
         else {
             transport.releaseConnection(connection);

@@ -45,18 +45,13 @@ public class ProtocolUtilsInternal {
 
     public static QuasiHttpResponse runTimeoutScheduler(
         CustomTimeoutScheduler timeoutScheduler, boolean forClient,
-        Callable<QuasiHttpResponse> proc) throws Exception {
+        Callable<QuasiHttpResponse> proc) throws Throwable {
         String timeoutMsg = forClient ? "send timeout" : "receive timeout";
         TimeoutResult result = timeoutScheduler.apply(proc);
         if (result != null) {
             Throwable error = result.getError();
             if (error != null) {
-                if (error instanceof Error) {
-                    throw (Error)error;
-                }
-                else {
-                    throw (Exception)error;
-                }
+                throw error;
             }
             if (result.isTimeout() == true) {
                 throw new QuasiHttpException(timeoutMsg,
