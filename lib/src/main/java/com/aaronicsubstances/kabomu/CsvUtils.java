@@ -188,7 +188,7 @@ public class CsvUtils {
 
     private static RuntimeException createCsvParseError(int row, int column,
             String errorMessage) {
-        throw new IllegalArgumentException(String.format(
+        return new IllegalArgumentException(String.format(
             "CSV parse error at row %s column %s: %s",
                 row + 1, column + 1,
                 errorMessage != null ? errorMessage : ""));

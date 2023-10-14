@@ -3,25 +3,267 @@
  */
 package com.aaronicsubstances.kabomu;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class CsvUtilsTest {
+
     @ParameterizedTest
     @MethodSource("createTestEscapeValueData")
-    void testEscapeValueData(String raw, String expected) {
+    void testEscapeValue(String raw, String expected) {
         String actual = CsvUtils.escapeValue(raw);
         assertEquals(expected, actual);
     }
 
     static Stream<Arguments> createTestEscapeValueData() {
         return Stream.of(
-            Arguments.of("", "\"\"")
+            Arguments.of("", "\"\""),
+            Arguments.of("d", "d"),
+            Arguments.of("\n", "\"\n\""),
+            Arguments.of("\r", "\"\r\""),
+            Arguments.of("m,n", "\"m,n\""),
+            Arguments.of("m\"n", "\"m\"\"n\"")
         );
     }
+
+    @ParameterizedTest
+    @MethodSource("createTestUnescapeValueData")
+    void testUnescapeValue(String escaped, String expected) {
+        String actual = CsvUtils.unescapeValue(escaped);
+        assertEquals(expected, actual);
+    }
+
+    static Stream<Arguments> createTestUnescapeValueData() {
+        return Stream.of(
+            Arguments.of("\"\"", ""),
+            Arguments.of("d", "d"),
+            Arguments.of("\"\n\"", "\n"),
+            Arguments.of("\"\r\"", "\r"),
+            Arguments.of("\"m,n\"", "m,n"),
+            Arguments.of("\"m\"\"n\"", "m\"n")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("createTestUnescapeValueForErrorsData")
+    void testUnescapeValueForErrors(String escaped) {
+        assertThrowsExactly(IllegalArgumentException.class, () -> {
+            CsvUtils.unescapeValue(escaped);
+        });
+    }
+
+    static Stream<Arguments> createTestUnescapeValueForErrorsData() {
+        return Stream.of(
+            Arguments.of("\""),
+            Arguments.of("d\""),
+            Arguments.of("\"\"\""),
+            Arguments.of(","),
+            Arguments.of("m,n\n"),
+            Arguments.of("\"m\"n")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("createTestSerializeData")
+    void testSerialize(List<List<String>> rows, String expected) {
+        String actual = CsvUtils.serialize(rows);
+        assertEquals(expected, actual);
+    }
+
+    static List<Arguments> createTestSerializeData() {
+        List<Arguments> testData = new ArrayList<>();
+
+        List<List<String>> rows = new ArrayList<>();
+        String expected = "";
+        testData.add(Arguments.of(rows, expected));
+
+        rows = Arrays.asList(
+            Arrays.asList("")
+        );
+        expected = "\"\"\n";
+        testData.add(Arguments.of(rows, expected));
+
+        rows = Arrays.asList(
+            new ArrayList<String>()
+        );
+        expected = "\n";
+        testData.add(Arguments.of(rows, expected));
+
+        rows = Arrays.asList(
+            Arrays.asList("a"),
+            Arrays.asList("b", "c")
+        );
+        expected = "a\nb,c\n";
+        testData.add(Arguments.of(rows, expected));
+
+        rows = Arrays.asList(
+            Arrays.asList(),
+            Arrays.asList(",", "c")
+        );
+        expected = "\n\",\",c\n";
+        testData.add(Arguments.of(rows, expected));
+
+        rows = Arrays.asList(
+            Arrays.asList("head", "tail", "."),
+            Arrays.asList("\n", " c\"d "),
+            Arrays.asList()
+        );
+        expected = "head,tail,.\n\"\n\",\" c\"\"d \"\n\n";
+        testData.add(Arguments.of(rows, expected));
+
+        rows = Arrays.asList(
+            Arrays.asList("a\nb,c\n"),
+            Arrays.asList("\n\",\",c\n", "head,tail,.\n\"\n\",\" c\"\"d \"\n\n")
+        );
+        expected = "\"a\nb,c\n\"\n" +
+            "\"\n\"\",\"\",c\n\",\"head,tail,.\n\"\"\n\"\",\"\" c\"\"\"\"d \"\"\n\n\"\n";
+        testData.add(Arguments.of(rows, expected));
+
+        return testData;
+    }
+
+    @ParameterizedTest
+    @MethodSource("createTestDeserializeData")
+    void testDeserialize(String csv, List<List<String>> expected) {
+        List<List<String>> actual = CsvUtils.deserialize(csv);
+        assertEquals(expected, actual);
+    }
+
+    static List<Arguments> createTestDeserializeData() {
+        List<Arguments> testData = new ArrayList<>();
+
+        String csv = "";
+        List<List<String>> expected = new ArrayList<>();
+        testData.add(Arguments.of(csv, expected));
+        
+        csv = "\"\"";
+        expected = Arrays.asList(
+            Arrays.asList("")
+        );
+        testData.add(Arguments.of(csv, expected));
+        
+        csv = "\n";
+        expected = Arrays.asList(
+            Arrays.asList()
+        );
+        testData.add(Arguments.of(csv, expected));
+
+        csv = "\"\",\"\"\n";
+        expected = Arrays.asList(
+            Arrays.asList("", "")
+        );
+        testData.add(Arguments.of(csv, expected));
+
+        csv = "\"\",\"\"";
+        expected = Arrays.asList(
+            Arrays.asList("", "")
+        );
+        testData.add(Arguments.of(csv, expected));
+
+        csv = "a\nb,c\n";
+        expected = Arrays.asList(
+            Arrays.asList("a"),
+            Arrays.asList("b", "c")
+        );
+        testData.add(Arguments.of(csv, expected));
+
+        csv = "a\nb,c";
+        expected = Arrays.asList(
+            Arrays.asList("a"),
+            Arrays.asList("b", "c")
+        );
+        testData.add(Arguments.of(csv, expected));
+
+        csv = "a,\"\"\nb,c";
+        expected = Arrays.asList(
+            Arrays.asList("a", ""),
+            Arrays.asList("b", "c")
+        );
+        testData.add(Arguments.of(csv, expected));
+
+        csv = "a\nb,";
+        expected = Arrays.asList(
+            Arrays.asList("a"),
+            Arrays.asList("b", "")
+        );
+        testData.add(Arguments.of(csv, expected));
+
+        csv = "\"a\"\n\"b\",\"\""; // test for unnecessary quotes
+        expected = Arrays.asList(
+            Arrays.asList("a"),
+            Arrays.asList("b", "")
+        );
+        testData.add(Arguments.of(csv, expected));
+
+        csv = "\r\n\",\",c\r\n";
+        expected = Arrays.asList(
+            Arrays.asList(),
+            Arrays.asList(",", "c")
+        );
+        testData.add(Arguments.of(csv, expected));
+
+        csv = "\n\",\",c";
+        expected = Arrays.asList(
+            Arrays.asList(),
+            Arrays.asList(",", "c")
+        );
+        testData.add(Arguments.of(csv, expected));
+
+        csv = "head,tail,.\n\"\n\",\" c\"\"d \"\n\n";
+        expected = Arrays.asList(
+            Arrays.asList("head", "tail", "."),
+            Arrays.asList("\n", " c\"d "),
+            Arrays.asList()
+        );
+        testData.add(Arguments.of(csv, expected));
+
+        csv = "head,tail,.\n\"\n\",\" c\"\"d \"\n";
+        expected = Arrays.asList(
+            Arrays.asList("head", "tail", "."),
+            Arrays.asList("\n", " c\"d ")
+        );
+        testData.add(Arguments.of(csv, expected));
+
+        csv = "head,tail,.\n\"\r\n\",\" c\"\"d \"\r";
+        expected = Arrays.asList(
+            Arrays.asList("head", "tail", "."),
+            Arrays.asList("\r\n", " c\"d ")
+        );
+        testData.add(Arguments.of(csv, expected));
+
+        csv = "\"a\nb,c\n\"\n" +
+            "\"\n\"\",\"\",c\n\",\"head,tail,.\n\"\"\n\"\",\"\" c\"\"\"\"d \"\"\n\n\"\n";
+        expected = Arrays.asList(
+            Arrays.asList("a\nb,c\n"),
+            Arrays.asList("\n\",\",c\n", "head,tail,.\n\"\n\",\" c\"\"d \"\n\n")
+        );
+        testData.add(Arguments.of(csv, expected));
+
+        return testData;
+    }
+
+    @ParameterizedTest
+    @MethodSource("createTestDeserializeForErrorsData")
+    void testDeserialize(String csv) {
+        assertThrowsExactly(IllegalArgumentException.class, () -> {
+            CsvUtils.deserialize(csv);
+        });
+    }
+
+    static Stream<Arguments> createTestDeserializeForErrorsData() {
+        return Stream.of(
+            Arguments.of("\""),
+            Arguments.of("\"1\"2"),
+            Arguments.of("1\"\"2\""),
+            Arguments.of("1,2\",3")
+        );
+    } 
 }
