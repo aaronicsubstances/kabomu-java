@@ -6,6 +6,10 @@ import java.util.Map;
 import com.aaronicsubstances.kabomu.abstractions.DefaultQuasiHttpProcessingOptions;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpProcessingOptions;
 
+/**
+ * Provides helper constants and functions
+ * that may be neeeded by clients of Kabomu library.
+ */
 public class QuasiHttpUtils {
 
     /**
@@ -30,14 +34,49 @@ public class QuasiHttpUtils {
      */
     public static final String ENV_KEY_CONNECTION = "kabomu.connection";
 
+    /**
+     * Equals HTTP method "CONNECT".
+     */
     public static final String METHOD_CONNECT = "CONNECT";
+
+    /**
+     * Equals HTTP method "DELETE".
+     */
     public static final String METHOD_DELETE = "DELETE";
+
+    /**
+     * Equals HTTP method "GET".
+     */
     public static final String METHOD_GET = "GET";
+
+    /**
+     * Equals HTTP method "HEAD".
+     */
     public static final String METHOD_HEAD = "HEAD";
+
+    /**
+     * Equals HTTP method "OPTIONS".
+     */
     public static final String METHOD_OPTIONS = "OPTIONS";
+
+    /**
+     * Equals HTTP method "PATCH".
+     */
     public static final String METHOD_PATCH = "PATCH";
+
+    /**
+     * Equals HTTP method "POST".
+     */
     public static final String METHOD_POST = "POST";
+
+    /**
+     * Equals HTTP method "PUT".
+     */
     public static final String METHOD_PUT = "PUT";
+
+    /**
+     * Equals HTTP method "TRACE".
+     */
     public static final String METHOD_TRACE = "TRACE";
 
     /**
@@ -105,6 +144,16 @@ public class QuasiHttpUtils {
      */
     public static final int DEFAULT_MAX_HEADERS_SIZE = 8_192;
 
+    /**
+     * Merges two sources of processing options together, unless one of
+     * them is null, in which case it returns the non-null one.
+     * @param preferred options object whose valid property values will
+     * make it to merged result
+     * @param fallback options object whose valid property
+     * values will make it to merged result, if corresponding property
+     * on preferred argument are invalid.
+     * @return merged options
+     */
     public static QuasiHttpProcessingOptions mergeProcessingOptions(
             QuasiHttpProcessingOptions preferred,
             QuasiHttpProcessingOptions fallback) {

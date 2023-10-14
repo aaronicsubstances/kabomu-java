@@ -3,6 +3,15 @@ package com.aaronicsubstances.kabomu;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Provides CSV parsing functions for the Kabomu library.
+ * 
+ * The variant of CSV supported resembles that of Microsoft Excel, in which
+ * <ul>
+ *  <li>the character for separating columns is the comma</li>
+ *  <li>the character for escaping commas and newlines is the double quote.</li>
+ * </ul>
+ */
 public class CsvUtils {
     private static final int TOKEN_EOI = -1;
     private static final int TOKEN_COMMA = 1;
@@ -53,6 +62,13 @@ public class CsvUtils {
         return false;
     }
 
+    /**
+     * Parses a CSV string.
+     * @param csv the csv string to parse
+     * @return CSV parse results as a list of rows, in which each row is represented as a list of values
+     * corresponding to the row's columns.
+     * @exception IllegalArgumentException If an error occurs
+     */
     public static List<List<String>> deserialize(String csv) {
         List<List<String>> parsedCsv = new ArrayList<>();
         List<String> currentRow = new ArrayList<>();
@@ -194,6 +210,12 @@ public class CsvUtils {
                 errorMessage != null ? errorMessage : ""));
     }
 
+    /**
+     * Generates a CSV string.
+     * @param rows Data for CSV generation. Each row is a list whose entries will be treated as the values of
+     * columns in the row. Also no row is treated specially.
+     * @return CSV string corresponding to rows
+     */
     public static String serialize(List<List<String>> rows) {
         StringBuilder csvBuilder = new StringBuilder();
         for (List<String> row : rows) {
@@ -210,6 +232,11 @@ public class CsvUtils {
         return csvBuilder.toString();
     }
 
+    /**
+     * Escapes a CSV value. Note that empty strings are always escaped as two double quotes.
+     * @param raw CSV value to escape.
+     * @return Escaped CSV value.
+     */
     public static String escapeValue(String raw) {
         if (!doesValueContainSpecialCharacters(raw)) {
             // escape empty strings with two double quotes to resolve ambiguity
@@ -220,6 +247,13 @@ public class CsvUtils {
         return '"' + raw.replace("\"", "\"\"") + '"';
     }
 
+    /**
+     * Reverses the escaping of a CSV value.
+     * @param escaped CSV escaped value.
+     * @return CSV value which equals escaped argument when escaped.
+     * @exception IllegalArgumentException If the escaped argument is an
+     * invalid escaped value.
+     */
     public static String unescapeValue(String escaped) {
         if (!doesValueContainSpecialCharacters(escaped)) {
             return escaped;

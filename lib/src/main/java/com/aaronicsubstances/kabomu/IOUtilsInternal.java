@@ -18,26 +18,29 @@ public class IOUtilsInternal {
             byte[] data, int offset, int length) throws IOException {
         // allow zero-byte reads to proceed to touch the
         // stream, rather than just return.
-        while (true) {
+        do {
             int bytesRead = inputStream.read(
                 data, offset, length);
+            if (bytesRead == -1) {
+                throw KabomuIOException.createEndOfReadError();
+            }
+            if (bytesRead < 0) {
+                throw new ExpectationViolationException(
+                    "read returned invalid length: " + bytesRead);
+            }
+            if (bytesRead == 0 && length != 0) {
+                throw new ExpectationViolationException(
+                    "read returned zero bytes");
+            }
             if (bytesRead > length) {
                 throw new ExpectationViolationException(
                     "read beyond requested length: " +
                     String.format("(%s > %s)",
                         bytesRead, length));
             }
-            if (bytesRead < length) {
-                if (bytesRead <= 0) {
-                    throw KabomuIOException.createEndOfReadError();
-                }
-                offset += bytesRead;
-                length -= bytesRead;
-            }
-            else {
-                break;
-            }
-        }
+            offset += bytesRead;
+            length -= bytesRead;
+        } while (length > 0);
     }
 
     public static void copy(InputStream src,
@@ -45,6 +48,14 @@ public class IOUtilsInternal {
         byte[] buf = new byte[DEFAULT_READ_BUFFER_SIZE];
         int length;
         while ((length = src.read(buf)) != -1) {
+            if (length == 0) {
+                throw new ExpectationViolationException(
+                    "read returned zero bytes");
+            }
+            if (length < 0) {
+                throw new ExpectationViolationException(
+                    "read returned invalid length: " + length);
+            }
             if (length > buf.length) {
                 throw new ExpectationViolationException(
                     "read beyond buffer size: " +

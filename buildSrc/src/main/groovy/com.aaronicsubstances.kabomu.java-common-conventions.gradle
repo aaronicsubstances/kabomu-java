@@ -16,6 +16,7 @@ dependencies {
     // Use JUnit Jupiter for testing.
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
     testImplementation 'commons-io:commons-io:2.14.0'
+    testImplementation 'org.hamcrest:hamcrest:2.2'
 }
 
 tasks.named('test') {
