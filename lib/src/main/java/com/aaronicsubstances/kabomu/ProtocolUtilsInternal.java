@@ -31,20 +31,6 @@ import com.aaronicsubstances.kabomu.tlv.TlvUtils;
  */
 class ProtocolUtilsInternal {
 
-    public static Boolean getEnvVarAsBoolean(Map<String, Object> environment,
-            String key) {
-        if (environment != null && environment.containsKey(key)) {
-            Object value = environment.get(key);
-            if (value instanceof Boolean) {
-                return (Boolean)value;
-            }
-            else if (value != null) {
-                return Boolean.parseBoolean((String)value);
-            }
-        }
-        return null;
-    }
-
     public static QuasiHttpResponse runTimeoutScheduler(
         CustomTimeoutScheduler timeoutScheduler, boolean forClient,
         Callable<QuasiHttpResponse> proc) throws Throwable {

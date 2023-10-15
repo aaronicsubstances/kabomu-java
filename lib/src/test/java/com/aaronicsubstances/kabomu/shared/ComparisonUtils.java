@@ -2,6 +2,10 @@ package com.aaronicsubstances.kabomu.shared;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpProcessingOptions;
 
 public class ComparisonUtils {
@@ -31,5 +35,31 @@ public class ComparisonUtils {
             actual.getExtraConnectivityParams());
         assertEquals(expected.getMaxHeadersSize(),
             actual.getMaxHeadersSize());
+    }
+
+    public static void compareHeaders(
+            Map<String, List<String>> expected,
+            Map<String, List<String>> actual) {
+        TreeMap<String, List<String>> sortedExpected =
+            new TreeMap<>();
+        if (expected != null) {
+            for (Map.Entry<String, List<String>> entry : expected.entrySet()) {
+                List<String> value = entry.getValue();
+                if (value != null && !value.isEmpty()) {
+                    sortedExpected.put(entry.getKey(), value);
+                }
+            }
+        }
+        TreeMap<String, List<String>> sortedActual =
+            new TreeMap<>();
+        if (actual != null) {
+            for (Map.Entry<String, List<String>> entry : actual.entrySet()) {
+                List<String> value = entry.getValue();
+                if (value != null && !value.isEmpty()) {
+                    sortedActual.put(entry.getKey(), value);
+                }
+            }
+        }
+        assertEquals(sortedExpected, sortedActual);
     }
 }
