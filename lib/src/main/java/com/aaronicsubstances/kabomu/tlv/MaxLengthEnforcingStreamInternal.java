@@ -1,4 +1,4 @@
-package com.aaronicsubstances.kabomu.protocolimpl;
+package com.aaronicsubstances.kabomu.tlv;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -6,7 +6,7 @@ import java.util.Objects;
 
 import com.aaronicsubstances.kabomu.exceptions.KabomuIOException;
 
-public class MaxLengthEnforcingStreamInternal extends InputStream {
+class MaxLengthEnforcingStreamInternal extends InputStream {
     private static final int DEFAULT_MAX_LENGTH = 134_217_728;
 
     private final InputStream backingStream;
@@ -15,7 +15,8 @@ public class MaxLengthEnforcingStreamInternal extends InputStream {
 
     public MaxLengthEnforcingStreamInternal(InputStream backingStream,
             int maxLength) {
-        Objects.requireNonNull(backingStream, "backingStream");
+        this.backingStream = Objects.requireNonNull(backingStream,
+            "backingStream");
         if (maxLength == 0) {
             maxLength = DEFAULT_MAX_LENGTH;
         }
@@ -23,7 +24,6 @@ public class MaxLengthEnforcingStreamInternal extends InputStream {
             throw new IllegalArgumentException(
                 "max length cannot be negative: " + maxLength);
         }
-        this.backingStream = backingStream;
         this.maxLength = maxLength;
         bytesLeftToRead = maxLength + 1; // check for excess read.
     }

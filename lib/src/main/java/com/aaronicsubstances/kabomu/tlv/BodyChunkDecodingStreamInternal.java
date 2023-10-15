@@ -1,4 +1,4 @@
-package com.aaronicsubstances.kabomu.protocolimpl;
+package com.aaronicsubstances.kabomu.tlv;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,7 +8,7 @@ import com.aaronicsubstances.kabomu.IOUtilsInternal;
 import com.aaronicsubstances.kabomu.MiscUtilsInternal;
 import com.aaronicsubstances.kabomu.exceptions.KabomuIOException;
 
-public class BodyChunkDecodingStreamInternal extends InputStream  {
+class BodyChunkDecodingStreamInternal extends InputStream  {
     private final InputStream backingStream;
     private final int expectedTag;
     private final int tagToIgnore;
@@ -17,8 +17,8 @@ public class BodyChunkDecodingStreamInternal extends InputStream  {
 
     public BodyChunkDecodingStreamInternal(InputStream backingStream,
             int expectedTag, int tagToIgnore) {
-        Objects.requireNonNull(backingStream, "backingStream");
-        this.backingStream = backingStream;
+        this.backingStream = Objects.requireNonNull(backingStream,
+            "backingStream");
         this.expectedTag = expectedTag;
         this.tagToIgnore = tagToIgnore;
     }

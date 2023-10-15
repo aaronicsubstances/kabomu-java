@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class QuasiHttpUtilsTest {
+class QuasiHttpUtilsTest {
 
     @Test
     public void testClassConstants() {

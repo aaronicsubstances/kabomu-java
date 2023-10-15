@@ -43,8 +43,7 @@ public class LocalhostTcpClientTransport implements QuasiHttpClientTransport {
         Socket socket = new Socket();
         socket.setTcpNoDelay(true);
         SocketConnection connection = new SocketConnection(socket, port,
-            sendOptions, defaultSendOptions);
-        connection.setTimeoutScheduler(scheduledExecutorService,
+            sendOptions, defaultSendOptions, scheduledExecutorService,
             executorService);
         return connection;
     }

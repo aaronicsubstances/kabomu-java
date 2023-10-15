@@ -1,18 +1,18 @@
-package com.aaronicsubstances.kabomu.protocolimpl;
+package com.aaronicsubstances.kabomu.tlv;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Objects;
 
-public class BodyChunkEncodingStreamInternal extends OutputStream {
+class BodyChunkEncodingStreamInternal extends OutputStream {
     private final OutputStream backingStream;
     private final byte[] tagToUse;
     private static final byte[] ENCODED_ZERO_LENGTH = new byte[4];
 
     public BodyChunkEncodingStreamInternal(OutputStream backingStream,
             int tagToUse) {
-        Objects.requireNonNull(backingStream, "backingStream");
-        this.backingStream = backingStream;
+        this.backingStream = Objects.requireNonNull(backingStream,
+            "backingStream");
         this.tagToUse = new byte[4];
         TlvUtils.encodeTag(tagToUse, this.tagToUse, 0);
     }

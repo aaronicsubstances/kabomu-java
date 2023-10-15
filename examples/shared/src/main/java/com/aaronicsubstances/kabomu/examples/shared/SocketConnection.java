@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -20,26 +19,27 @@ import com.aaronicsubstances.kabomu.abstractions.QuasiHttpProcessingOptions;
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpResponse;
 import com.aaronicsubstances.kabomu.abstractions.CustomTimeoutScheduler.DefaultTimeoutResult;
 import com.aaronicsubstances.kabomu.abstractions.CustomTimeoutScheduler.TimeoutResult;
+import com.aaronicsubstances.kabomu.exceptions.KabomuIOException;
 import com.aaronicsubstances.kabomu.QuasiHttpUtils;
 
 public class SocketConnection implements QuasiHttpConnection {
     private static final QuasiHttpProcessingOptions defaultProcessingOptions =
         new DefaultQuasiHttpProcessingOptions();
 
-    private static final TimeoutResult DUMMY_RESULT = new DefaultTimeoutResult(false, null, null);
-
     private final Socket socket;
     private final Integer clientPort;
     private final QuasiHttpProcessingOptions processingOptions;
     private Map<String, Object> environment;
 
-    private CustomTimeoutScheduler timeoutScheduler;
-    private ScheduledFuture<Void> timeoutFuture;
-    private AtomicReference<TimeoutResult> goChannel;
+    private final CustomTimeoutScheduler timeoutScheduler;
+    private final ScheduledFuture<Void> timeoutFuture;
+    private final AtomicReference<TimeoutResult> goChannel;
 
     public SocketConnection(Socket socket, Integer clientPort,
             QuasiHttpProcessingOptions processingOptions,
-            QuasiHttpProcessingOptions fallbackProcessingOptions) {
+            QuasiHttpProcessingOptions fallbackProcessingOptions,
+            ScheduledExecutorService scheduledExecutorService,
+            ExecutorService executorService) {
         this.socket = Objects.requireNonNull(socket, "socket");
         this.clientPort = clientPort;
         QuasiHttpProcessingOptions effectiveProcessingOptions =
@@ -49,21 +49,16 @@ public class SocketConnection implements QuasiHttpConnection {
             effectiveProcessingOptions = defaultProcessingOptions;
         }
         this.processingOptions = effectiveProcessingOptions;
-    }
+        int timeoutMillis = effectiveProcessingOptions.getTimeoutMillis();
+        if (scheduledExecutorService == null || executorService == null ||
+                timeoutMillis <= 0) {
+            goChannel = null;
+            timeoutFuture = null;
+            timeoutScheduler = null;
+            return;
+        }
 
-    public void setTimeoutScheduler(
-            ScheduledExecutorService scheduledExecutorService,
-            ExecutorService executorService) {
-        if (scheduledExecutorService == null || executorService == null) {
-            return;
-        }
-        int timeoutMillis = processingOptions.getTimeoutMillis();
-        if (timeoutMillis <= 0) {
-            return;
-        }
-        // set goChannel and timeoutFuture variables before multithreding starts.
-        AtomicReference<TimeoutResult> goChannel = new AtomicReference<>();
-        this.goChannel = goChannel;
+        goChannel = new AtomicReference<>();
         timeoutFuture = scheduledExecutorService.schedule(() -> {
             TimeoutResult timeoutResult = new DefaultTimeoutResult(true, null, null);
             goChannel.compareAndSet(null, timeoutResult);
@@ -76,7 +71,7 @@ public class SocketConnection implements QuasiHttpConnection {
             @Override
             public TimeoutResult apply(Callable<QuasiHttpResponse> proc)
                     throws Exception {
-                Future<?> procFutureResult = executorService.submit(() -> {
+                executorService.submit(() -> {
                     try {
                         QuasiHttpResponse res = proc.call();
                         TimeoutResult successResult = new DefaultTimeoutResult(false, res, null);
@@ -91,8 +86,8 @@ public class SocketConnection implements QuasiHttpConnection {
                     }
                 });
 
-                // let thread wait for one of success, error, timeout
-                // or release via DUMMY constant.
+                // let thread wait for one of success, timeout or
+                // error (from proc argument or release).
                 TimeoutResult result;
                 while ((result = goChannel.get()) == null) {
                     synchronized (goChannel) {
@@ -101,9 +96,6 @@ public class SocketConnection implements QuasiHttpConnection {
                         }
                         catch (InterruptedException ignore) {}
                     }
-                }
-                if (result == DUMMY_RESULT) {
-                    procFutureResult.cancel(true);
                 }
                 return result;
             }
@@ -138,13 +130,14 @@ public class SocketConnection implements QuasiHttpConnection {
     }
 
     public void release(QuasiHttpResponse response) throws Exception {
-        ScheduledFuture<Void> timeoutFuture = this.timeoutFuture;
         if (timeoutFuture != null) {
-            timeoutFuture.cancel(true);
+            timeoutFuture.cancel(false);
         }
-        AtomicReference<TimeoutResult> goChannel = this.goChannel;
-        if (goChannel != null) {
-            goChannel.compareAndSet(null, DUMMY_RESULT);
+        if (goChannel != null && goChannel.get() == null) {
+            TimeoutResult releaseErrorResult = new DefaultTimeoutResult(false,
+                null, new KabomuIOException(
+                    "connection release initiated"));
+            goChannel.compareAndSet(null, releaseErrorResult);
             synchronized (goChannel) {
                 goChannel.notifyAll();
             }

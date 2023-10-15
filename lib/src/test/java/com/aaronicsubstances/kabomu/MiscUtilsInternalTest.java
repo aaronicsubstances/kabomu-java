@@ -12,7 +12,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class MiscUtilsInternalTest {
+class MiscUtilsInternalTest {
 
     @ParameterizedTest
     @MethodSource("createTestSerializeInt32BEData")
@@ -178,6 +178,29 @@ public class MiscUtilsInternalTest {
     public void testParsetInt32ForErrors(String input) {
         assertThrowsExactly(NumberFormatException.class, () ->
             MiscUtilsInternal.parseInt32(input));
+    }
+
+    @ParameterizedTest
+    @MethodSource("createTestIsValidByteBufferSliceData")
+    public void testIsValidByteBufferSlice(byte[] data, int offset, int length,
+            boolean expected) {
+        boolean actual = MiscUtilsInternal.isValidByteBufferSlice(data, offset, length);
+        assertEquals(expected, actual);
+    }
+
+    static Stream<Arguments> createTestIsValidByteBufferSliceData() {
+        return Stream.of(
+            Arguments.of(null, 0, 0, false),
+            Arguments.of(new byte[0], 0, 0, true),
+            Arguments.of(new byte[0], 1, 0, false),
+            Arguments.of(new byte[0], 0, 1, false),
+            Arguments.of(new byte[1], 0, 1, true),
+            Arguments.of(new byte[1], -1, 0, false),
+            Arguments.of(new byte[1], 1, 1, false),
+            Arguments.of(new byte[2], 1, 1, true),
+            Arguments.of(new byte[2], 0, 2, true),
+            Arguments.of(new byte[3], 2, 2, false)
+        );
     }
 
     @Test

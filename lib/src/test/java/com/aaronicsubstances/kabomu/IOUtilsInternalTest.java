@@ -16,7 +16,7 @@ import com.aaronicsubstances.kabomu.exceptions.KabomuIOException;
 import com.aaronicsubstances.kabomu.shared.ComparisonUtils;
 import com.aaronicsubstances.kabomu.shared.RandomizedReadInputStream;
 
-public class IOUtilsInternalTest {
+class IOUtilsInternalTest {
 
     @Test
     void testReadBytesFully() throws IOException {

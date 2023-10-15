@@ -5,7 +5,13 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.aaronicsubstances.kabomu.MiscUtilsInternal;
+
 public class RandomizedReadInputStream extends FilterInputStream {
+
+    public RandomizedReadInputStream(String srcData) {
+        this(MiscUtilsInternal.stringToBytes(srcData));
+    }
 
     public RandomizedReadInputStream(byte[] srcData) {
         this(new ByteArrayInputStream(srcData));

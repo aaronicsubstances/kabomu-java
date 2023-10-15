@@ -1,4 +1,4 @@
-package com.aaronicsubstances.kabomu.protocolimpl;
+package com.aaronicsubstances.kabomu;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,10 +11,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
-import com.aaronicsubstances.kabomu.CsvUtils;
-import com.aaronicsubstances.kabomu.IOUtilsInternal;
-import com.aaronicsubstances.kabomu.MiscUtilsInternal;
-import com.aaronicsubstances.kabomu.QuasiHttpUtils;
 import com.aaronicsubstances.kabomu.abstractions.CustomTimeoutScheduler;
 import com.aaronicsubstances.kabomu.abstractions.DefaultQuasiHttpRequest;
 import com.aaronicsubstances.kabomu.abstractions.DefaultQuasiHttpResponse;
@@ -26,8 +22,14 @@ import com.aaronicsubstances.kabomu.abstractions.CustomTimeoutScheduler.TimeoutR
 import com.aaronicsubstances.kabomu.exceptions.ExpectationViolationException;
 import com.aaronicsubstances.kabomu.exceptions.MissingDependencyException;
 import com.aaronicsubstances.kabomu.exceptions.QuasiHttpException;
+import com.aaronicsubstances.kabomu.tlv.TlvUtils;
 
-public class ProtocolUtilsInternal {
+/**
+ * Should be in protocolimpl package, but is here so that
+ * StandardQuasiHttpClient and StandardQuasiHttpServer
+ * classes can access it.
+ */
+class ProtocolUtilsInternal {
 
     public static Boolean getEnvVarAsBoolean(Map<String, Object> environment,
             String key) {

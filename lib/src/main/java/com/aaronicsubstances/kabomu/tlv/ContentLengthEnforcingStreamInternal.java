@@ -1,4 +1,4 @@
-package com.aaronicsubstances.kabomu.protocolimpl;
+package com.aaronicsubstances.kabomu.tlv;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,8 +12,8 @@ class ContentLengthEnforcingStreamInternal extends InputStream {
 
     public ContentLengthEnforcingStreamInternal(InputStream backingStream,
             long contentLength) {
-        Objects.requireNonNull(backingStream, "backingStream");
-        this.backingStream = backingStream;
+        this.backingStream = Objects.requireNonNull(backingStream,
+            "backingStream");
         bytesLeftToRead = contentLength;
     }
 

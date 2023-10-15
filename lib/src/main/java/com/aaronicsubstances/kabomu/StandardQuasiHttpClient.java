@@ -15,7 +15,6 @@ import com.aaronicsubstances.kabomu.abstractions.QuasiHttpAltTransport.Deseriali
 import com.aaronicsubstances.kabomu.abstractions.QuasiHttpAltTransport.SerializerFunction;
 import com.aaronicsubstances.kabomu.exceptions.MissingDependencyException;
 import com.aaronicsubstances.kabomu.exceptions.QuasiHttpException;
-import com.aaronicsubstances.kabomu.protocolimpl.ProtocolUtilsInternal;
 
 public class StandardQuasiHttpClient {
 

@@ -29,6 +29,22 @@ public class MiscUtilsInternal {
         return Integer.parseInt(input != null ? input.trim() : null);
     }
 
+    public static boolean isValidByteBufferSlice(byte[] data, int offset, int length) {
+        if (data == null) {
+            return false;
+        }
+        if (offset < 0) {
+            return false;
+        }
+        if (length < 0) {
+            return false;
+        }
+        if (offset + length > data.length) {
+            return false;
+        }
+        return true;
+    }
+
     public static byte[] stringToBytes(String s) {
         return s.getBytes(StandardCharsets.UTF_8);
     }

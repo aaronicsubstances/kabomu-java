@@ -91,8 +91,7 @@ public class LocalhostTcpServerTransport implements QuasiHttpServerTransport {
         try {
             socket.setTcpNoDelay(true);
             SocketConnection connection = new SocketConnection(socket, null,
-                defaultProcessingOptions, null);
-            connection.setTimeoutScheduler(scheduledExecutorService,
+                defaultProcessingOptions, null, scheduledExecutorService,
                 executorService);
             quasiHttpServer.acceptConnection(connection);
         }
