@@ -15,28 +15,76 @@ import com.aaronicsubstances.kabomu.abstractions.QuasiHttpAltTransport.Serialize
 import com.aaronicsubstances.kabomu.exceptions.MissingDependencyException;
 import com.aaronicsubstances.kabomu.exceptions.QuasiHttpException;
 
+/**
+ * The standard implementation of the server side of the quasi http protocol
+ * defined by the Kabomu library.
+ *
+ * This class provides the server facing side of networking for end users.
+ * It is the complement to the {@link StandardQuasiHttpClient} class for
+ * providing HTTP semantics whiles enabling underlying transport options
+ * beyond TCP.
+ *
+ * Therefore this class can be seen as the equivalent of an HTTP server
+ * in which the underlying transport of
+ * choice extends beyond TCP to include IPC mechanisms.
+ */
 public class StandardQuasiHttpServer {
     private QuasiHttpApplication application;
     private QuasiHttpServerTransport transport;
 
+    /**
+     * Creates a new instance.
+     */
     public StandardQuasiHttpServer() {
     }
 
+    /**
+     * Gets the function which is
+     * responsible for processing requests to generate responses.
+     * @return quasi http application
+     */
     public QuasiHttpApplication getApplication() {
         return application;
     }
+
+    /**
+     * Sets the function which is
+     * responsible for processing requests to generate responses.
+     * @param application quasi http application
+     */
     public void setApplication(QuasiHttpApplication application) {
         this.application = application;
     }
+
+    /**
+     * Gets the underlying transport (TCP or IPC) for retrieving requests
+     * for quasi web applications, and for sending responses generated from
+     * quasi web applications.
+     * @return quasi http transport
+     */
     public QuasiHttpServerTransport getTransport() {
         return transport;
     }
+
+    /**
+     * Sets the underlying transport (TCP or IPC) for retrieving requests
+     * for quasi web applications, and for sending responses generated from
+     * quasi web applications.
+     * @param transport quasi http transport
+     */
     public void setTransport(QuasiHttpServerTransport transport) {
         this.transport = transport;
     }
 
-    public void acceptConnection(QuasiHttpConnection connection)
-            throws Exception {
+    /**
+     * Used to process incoming connections from quasi http server transports.
+     * @param connection represents a quasi http connection
+     * @exception NullPointerException if the connection argument is null
+     * @exception MissingDependencyException if the transport property
+     * or the application property is null.
+     * @throws QuasiHttpException if an error occurs with request processing.
+     */
+    public void acceptConnection(QuasiHttpConnection connection) {
         Objects.requireNonNull(connection, "connection");
 
         // access fields for use per processing call, in order to cooperate with
@@ -63,10 +111,13 @@ public class StandardQuasiHttpServer {
                 processAccept(application, transport,
                     connection);
             }
-            abort(transport, connection, false);
+            transport.releaseConnection(connection);
         }
         catch (Throwable e) {
-            abort(transport, connection, true);
+            try {
+                transport.releaseConnection(connection);
+            }
+            catch (Throwable ignore) { }
             if (e instanceof QuasiHttpException)
             {
                 throw (QuasiHttpException)e;
@@ -117,19 +168,5 @@ public class StandardQuasiHttpServer {
             }
         }
         return null;
-    }
-
-    private void abort(QuasiHttpServerTransport transport,
-            QuasiHttpConnection connection, boolean errorOccured)
-            throws Exception {
-        if (errorOccured) {
-            try {
-                transport.releaseConnection(connection);
-            }
-            catch (Throwable ignore) { }
-        }
-        else {
-            transport.releaseConnection(connection);
-        }
     }
 }
