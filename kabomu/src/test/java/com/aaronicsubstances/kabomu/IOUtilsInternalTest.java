@@ -1,5 +1,6 @@
 package com.aaronicsubstances.kabomu;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,7 +59,7 @@ class IOUtilsInternalTest {
     @Test
     void testReadBytesFullyForErrors() throws IOException {
         // arrange
-        InputStream reader = new RandomizedReadInputStream(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7 });
+        InputStream reader = new ByteArrayInputStream(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7 });
         byte[] readBuffer = new byte[5];
 
         // act

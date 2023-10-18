@@ -241,15 +241,4 @@ public class QuasiHttpUtils {
         }
         return dest;
     }
-
-    static boolean determineEffectiveBooleanOption(
-            Boolean preferred, Boolean fallback1, boolean defaultValue) {
-        if (preferred != null) {
-            return preferred;
-        }
-        if (fallback1 != null) {
-            return fallback1;
-        }
-        return defaultValue;
-    }
 }

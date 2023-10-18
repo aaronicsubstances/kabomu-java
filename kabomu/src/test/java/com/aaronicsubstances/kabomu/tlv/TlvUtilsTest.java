@@ -199,7 +199,7 @@ public class TlvUtilsTest {
         byte[] expected = new byte[] {
             0, 0, 0, 16,
             0, 0, 0, 1,
-            45,
+            srcByte,
             0, 0, 0, 16,
             0, 0, 0, 0
         };

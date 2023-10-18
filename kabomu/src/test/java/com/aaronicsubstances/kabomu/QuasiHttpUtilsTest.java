@@ -57,6 +57,35 @@ class QuasiHttpUtilsTest {
     @Test
     void testMergeProcessingOptions2() {
         QuasiHttpProcessingOptions preferred = new DefaultQuasiHttpProcessingOptions();
+        QuasiHttpProcessingOptions fallback = null;
+        QuasiHttpProcessingOptions actual = QuasiHttpUtils.mergeProcessingOptions(
+            preferred, fallback);
+        assertSame(preferred, actual);
+    }
+
+    @Test
+    void testMergeProcessingOptions3() {
+        QuasiHttpProcessingOptions preferred = null;
+        QuasiHttpProcessingOptions fallback = new DefaultQuasiHttpProcessingOptions();
+        QuasiHttpProcessingOptions actual = QuasiHttpUtils.mergeProcessingOptions(
+            preferred, fallback);
+        assertSame(fallback, actual);
+    }
+
+    @Test
+    void testMergeProcessingOptions4() {
+        QuasiHttpProcessingOptions preferred = new DefaultQuasiHttpProcessingOptions();
+        QuasiHttpProcessingOptions fallback = new DefaultQuasiHttpProcessingOptions();
+        QuasiHttpProcessingOptions actual = QuasiHttpUtils.mergeProcessingOptions(
+            preferred, fallback);
+        QuasiHttpProcessingOptions expected = new DefaultQuasiHttpProcessingOptions();
+        expected.setExtraConnectivityParams(new HashMap<>());
+        ComparisonUtils.compareProcessingOptions(expected, actual);
+    }
+
+    @Test
+    void testMergeProcessingOptions5() {
+        QuasiHttpProcessingOptions preferred = new DefaultQuasiHttpProcessingOptions();
         preferred.setExtraConnectivityParams(new HashMap<>());
         preferred.getExtraConnectivityParams().put("scheme", "tht");
         preferred.setMaxHeadersSize(10);
@@ -201,29 +230,5 @@ class QuasiHttpUtilsTest {
         testData.add(Arguments.of(preferred, fallback, expected));
         
         return testData;
-    }
-
-    @ParameterizedTest
-    @MethodSource("createTestDetermineEffectiveBooleanOptionData")
-    void testDetermineEffectiveBooleanOption(
-            Boolean preferred, Boolean fallback1, boolean defaultValue, boolean expected) {
-        boolean actual = QuasiHttpUtils.determineEffectiveBooleanOption(
-            preferred, fallback1, defaultValue);
-        assertEquals(expected, actual);
-    }
-
-    static Stream<Arguments> createTestDetermineEffectiveBooleanOptionData() {
-        return Stream.of(
-            Arguments.of(true, null, true, true),
-            Arguments.of(false, true, true, false),
-            Arguments.of(null, false, true, false),
-            Arguments.of(null, true, false, true),
-            Arguments.of(null, true, true, true),
-            Arguments.of(null, null, true, true),
-            Arguments.of(null, null, false, false),
-            Arguments.of(true, true, false, true),
-            Arguments.of(true, true, true, true),
-            Arguments.of(false, false, false, false)
-        );
     }
 }

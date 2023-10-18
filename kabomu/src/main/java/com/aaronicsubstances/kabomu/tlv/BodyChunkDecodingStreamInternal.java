@@ -98,20 +98,8 @@ class BodyChunkDecodingStreamInternal extends InputStream  {
         byte[] encodedTag = new byte[4];
         IOUtilsInternal.readBytesFully(backingStream,
             encodedTag, 0, encodedTag.length);
-        return decodeTagObtainedFromStream(encodedTag, 0);
-    }
-
-    private int readLengthOnly() throws IOException {
-        byte[] encodedLen = new byte[4];
-        IOUtilsInternal.readBytesFully(backingStream,
-            encodedLen, 0, encodedLen.length);
-        return decodeLengthObtainedFromStream(encodedLen, 0);
-    }
-
-    private static int decodeTagObtainedFromStream(byte[] data, int offset)
-    {
         int tag = MiscUtilsInternal.deserializeInt32BE(
-            data, offset);
+            encodedTag, 0);
         if (tag <= 0) {
             throw new KabomuIOException("invalid tag: " +
                 tag);
@@ -119,9 +107,12 @@ class BodyChunkDecodingStreamInternal extends InputStream  {
         return tag;
     }
 
-    private static int decodeLengthObtainedFromStream(byte[] data, int offset) {
+    private int readLengthOnly() throws IOException {
+        byte[] encodedLen = new byte[4];
+        IOUtilsInternal.readBytesFully(backingStream,
+            encodedLen, 0, encodedLen.length);
         int decodedLength = MiscUtilsInternal.deserializeInt32BE(
-            data, offset);
+            encodedLen, 0);
         if (decodedLength < 0) {
             throw new KabomuIOException("invalid tag value length: " +
                 decodedLength);

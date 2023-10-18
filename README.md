@@ -1,6 +1,6 @@
 # Kabomu Library for Java
 
-This is a port of the Kabomu library originally written in C#.NET to the JDK platform.
+This is a port of the Kabomu library originally written in C#.NET to the JDK 8 platform.
 
 In a nutshell, Kabomu enables building quasi web applications that can connect endpoints within localhost and even within an OS process, through IPC mechanisms other than TCP.
 
@@ -8,7 +8,7 @@ See the [repository for the .NET version](https://github.com/aaronicsubstances/c
 
 ## Usage
 
-The entry classes of the libary are [StandardQuasiHttpClient](https://github.com/aaronicsubstances/kabomu-java/blob/master/lib/src/main/java/com/aaronicsubstances/kabomu/StandardQuasiHttpClient.java) and [StandardQuasiHttpServer](https://github.com/aaronicsubstances/kabomu-java/blob/master/lib/src/main/java/com/aaronicsubstances/kabomu/StandardQuasiHttpServer.java).
+The entry classes of the libary are [StandardQuasiHttpClient](https://github.com/aaronicsubstances/kabomu-java/blob/master/kabomu/src/main/java/com/aaronicsubstances/kabomu/StandardQuasiHttpClient.java) and [StandardQuasiHttpServer](https://github.com/aaronicsubstances/kabomu-java/blob/master/kabomu/src/main/java/com/aaronicsubstances/kabomu/StandardQuasiHttpServer.java).
 
 See [Examples](https://github.com/aaronicsubstances/kabomu-java/tree/master/examples) folder for sample file serving programs. Each of those programs demonstrates an IPC mechanism as represented by main files named with "-client" or "-server" suffix. E.g. to run the TCP client example, run
 

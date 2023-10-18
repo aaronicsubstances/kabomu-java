@@ -14,14 +14,13 @@ plugins {
 
 rootProject.name = 'kabomu-java'
 
+include('kabomu')
+
 // include two projects, 'foo' and 'foo:bar'
 // directories are inferred by replacing ':' with '/'
 //include 'foo:bar'
 
 // include one project whose project dir does not match the logical project path
-include('kabomu')
-project(':kabomu').projectDir = file('lib')
-
 include('examples-shared')
 project(':examples-shared').projectDir = file('examples/shared')
 
