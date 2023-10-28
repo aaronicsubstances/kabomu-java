@@ -2,6 +2,10 @@ package com.aaronicsubstances.kabomu.abstractions;
 
 import java.util.Map;
 
+/**
+ * Provides default implementation of the {@link QuasiHttpProcessingOptions}
+ * interface.
+ */
 public class DefaultQuasiHttpProcessingOptions implements QuasiHttpProcessingOptions {
     private Map<String, Object> extraConnectivityParams;
     private int timeoutMillis;

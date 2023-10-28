@@ -6,6 +6,12 @@ In a nutshell, Kabomu enables building quasi web applications that can connect e
 
 See the [repository for the .NET version](https://github.com/aaronicsubstances/cskabomu) for more details.
 
+## Install
+```
+implementation "com.aaronicsubstances:kabomu:${INSERT_LATEST_VERSION}"
+```
+
+
 ## Usage
 
 The entry classes of the libary are [StandardQuasiHttpClient](https://github.com/aaronicsubstances/kabomu-java/blob/master/kabomu/src/main/java/com/aaronicsubstances/kabomu/StandardQuasiHttpClient.java) and [StandardQuasiHttpServer](https://github.com/aaronicsubstances/kabomu-java/blob/master/kabomu/src/main/java/com/aaronicsubstances/kabomu/StandardQuasiHttpServer.java).

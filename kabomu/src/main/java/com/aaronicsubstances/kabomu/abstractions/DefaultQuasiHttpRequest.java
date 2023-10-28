@@ -4,6 +4,10 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Provides default implementation of {@link QuasiHttpRequest}
+ * interface.
+ */
 public class DefaultQuasiHttpRequest implements QuasiHttpRequest {
     private String target;
     private Map<String, List<String>> headers;

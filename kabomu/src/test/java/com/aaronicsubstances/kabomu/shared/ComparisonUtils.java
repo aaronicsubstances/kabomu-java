@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.function.Consumer;
 
 import org.apache.commons.io.IOUtils;
@@ -21,8 +21,8 @@ public class ComparisonUtils {
     public static void compareRequests(
             QuasiHttpRequest expected, QuasiHttpRequest actual,
             byte[] expectedReqBodyBytes) throws IOException {
-        if (expected == null) {
-            assertNull(actual);
+        if (expected == null || actual == null) {
+            assertSame(expected, actual);
             return;
         }
         assertEquals(expected.getHttpMethod(), actual.getHttpMethod());
@@ -36,8 +36,8 @@ public class ComparisonUtils {
     public static void compareResponses(
             QuasiHttpResponse expected, QuasiHttpResponse actual,
             byte[] expectedResBodyBytes) throws IOException {
-        if (expected == null) {
-            assertNull(actual);
+        if (expected == null || actual == null) {
+            assertSame(expected, actual);
             return;
         }
         assertNotNull(actual);
@@ -64,27 +64,29 @@ public class ComparisonUtils {
     public static void compareHeaders(
             Map<String, List<String>> expected,
             Map<String, List<String>> actual) {
-        TreeMap<String, List<String>> sortedExpected =
-            new TreeMap<>();
-        if (expected != null) {
-            for (Map.Entry<String, List<String>> entry : expected.entrySet()) {
-                List<String> value = entry.getValue();
-                if (value != null && !value.isEmpty()) {
-                    sortedExpected.put(entry.getKey(), value);
-                }
-            }
+        if (expected == null || actual == null) {
+            assertSame(expected, actual);
+            return;
         }
-        TreeMap<String, List<String>> sortedActual =
-            new TreeMap<>();
-        if (actual != null) {
-            for (Map.Entry<String, List<String>> entry : actual.entrySet()) {
-                List<String> value = entry.getValue();
-                if (value != null && !value.isEmpty()) {
-                    sortedActual.put(entry.getKey(), value);
-                }
-            }
+        List<List<String>> expectedExtraction = new ArrayList<>();
+        List<String> sortedExpectedKeys = new ArrayList<>(expected.keySet());
+        sortedExpectedKeys.sort(null);
+        for (String key : sortedExpectedKeys) {
+            List<String> row = new ArrayList<>();
+            row.add(key);
+            row.addAll(expected.get(key));
+            expectedExtraction.add(row);
         }
-        assertEquals(sortedExpected, sortedActual);
+        List<List<String>> actualExtraction = new ArrayList<>();
+        List<String> sortedActualKeys = new ArrayList<>(actual.keySet());
+        sortedActualKeys.sort(null);
+        for (String key : sortedActualKeys) {
+            List<String> row = new ArrayList<>();
+            row.add(key);
+            row.addAll(actual.get(key));
+            actualExtraction.add(row);
+        }
+        assertEquals(expectedExtraction, actualExtraction);
     }
 
     public static void compareData(byte[] expectedData, int expectedDataOffset,
