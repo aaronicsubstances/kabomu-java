@@ -68,8 +68,7 @@ publishing {
                 developers {
                     developer {
                         id = 'aaronic'
-                        name = 'Aaron Baffour-Awuah'
-                        email = 'aaronbaffourawuah@gmail.com'
+                        name = 'aaronicsubstances'
                     }
                 }
                 scm {
